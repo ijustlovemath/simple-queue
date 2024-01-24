@@ -188,25 +188,36 @@ typedef struct element elem_s;
 
 #define sq_init(T) sq_ ## T ## _init
 
+#define sq_destroy(T) sq_ ## T ## _destroy
+
 #define sq_enqueue(T) sq_enqueue_ ## T
 
 #define sq_peek(T) sq_peek_ ## T
 
 define_queue(elem_s)
 
-int main(void)
+int peek_dbg(sq_declare(elem_s) *q)
 {
-	sq_declare(elem_s) *q;
-	int res = sq_init(elem_s)(&q, 1000, 0);
-	elem_s x = {.flags=1};
-	res = sq_enqueue(elem_s)(q, &x);
+	
 	elem_s *peek = NULL;
-	res = sq_peek(elem_s)(q, &peek);
+	int res = sq_peek(elem_s)(q, &peek);
 	if(peek) {
 		printf("peek->flags=%d\n", peek->flags);
 	} else {
 		puts("peek failed to find anything");
 	}
+	return res;
+}
+
+int main(void)
+{
+	sq_declare(elem_s) *q;
+	int res = sq_init(elem_s)(&q, 1000, 0);
+	elem_s x = {.flags=1};
+	res = peek_dbg(q);
+	res = sq_enqueue(elem_s)(q, &x);
+	res = peek_dbg(q);
+	//printf("simple calloc: %p\n", calloc(1, 1));
+	res = sq_destroy(elem_s)(&q);
 	printf("res=%d\n", res);
-	printf("simple calloc: %p\n", calloc(1, 1));
 }
