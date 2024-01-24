@@ -89,13 +89,17 @@ int qstorage_ ## T ## _grow(qstorage_decl(T) *details) \
 		new_capacity = SIZE_MAX;\
 		goto cap;\
 	}\
-	new_capacity >>= 1;\
+	new_capacity <<= 1;\
 	goto cap;\
 cap:\
 	if(new_capacity > max_capacity) {\
 		new_capacity = max_capacity;\
 	}\
 	/*if we ever get a capacity > SIZE_MAX / sizeof(T), we're in trouble. unlikely to ever happen in production */\
+	if(new_capacity > SIZE_MAX / sizeof(T)) {\
+		puts("about to crash...");\
+	}\
+	printf("new capacity = %zu\n", new_capacity);\
 	details->data = realloc(details->data, sizeof(T) * new_capacity);\
 	if(!details->data) {\
 		status = -ENOMEM;\
@@ -113,10 +117,13 @@ int qstorage_ ## T ## _append(struct queue_storage_ ## T *details, T *elem)\
 	details->tip++;\
 	/* TODO: check if we need to increase the capacity.. */\
 	if(details->tip >= details->capacity) {\
+		puts("growing underlying storage...");\
 		status = qstorage_grow(T)(details);\
+		if(status) goto done;\
 	}\
 	/* TODO Use this memcpy approach or let user manage element lifetime? */\
 	details->data[details->tip] = *elem;\
+done:\
 	return status;\
 }\
 int sq_ ## T ## _init(struct simple_queue_ ## T **q, size_t max_capacity, size_t initial_capacity)\
@@ -218,6 +225,7 @@ int main(void)
 	res = sq_enqueue(elem_s)(q, &x);
 	res = peek_dbg(q);
 	//printf("simple calloc: %p\n", calloc(1, 1));
+	while(!(res = sq_enqueue(elem_s)(q, &x)));
 	res = sq_destroy(elem_s)(&q);
 	printf("res=%d\n", res);
 }
